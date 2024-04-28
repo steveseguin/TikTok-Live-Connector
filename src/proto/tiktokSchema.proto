@@ -45,10 +45,16 @@ message WebcastChatMessage {
   WebcastMessageEvent event = 1;
   User user = 2;
   string comment = 3;
-  repeated WebcastSubEmotes subemotes = 13;
+  repeated WebcastSubEmote emotes = 13;
 }
 
-message WebcastSubEmotes {
+// Chat Emotes (Subscriber)
+message WebcastEmoteChatMessage {
+  User user = 2;
+  EmoteDetails emote = 3;
+}
+
+message WebcastSubEmote {
  int32 placeInComment = 1; //starting at 0, you insert the emote itself into the comment at that place
  EmoteDetails emote = 2;
 }
@@ -278,6 +284,12 @@ message UserBadgesAttributes {
   int32 badgeSceneType = 3;
   repeated UserImageBadge imageBadges = 20;
   repeated UserBadge badges = 21;
+  PrivilegeLogExtra privilegeLogExtra = 12;
+}
+
+message PrivilegeLogExtra {
+  string privilegeId = 2;
+  string level = 5;
 }
 
 message UserBadge {

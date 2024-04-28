@@ -2,7 +2,7 @@ const { EventEmitter } = require('node:events');
 
 const TikTokHttpClient = require('./lib/tiktokHttpClient.js');
 const WebcastWebsocket = require('./lib/webcastWebsocket.js');
-const { getRoomIdFromMainPageHtml, validateAndNormalizeUniqueId } = require('./lib/tiktokUtils.js');
+const { getRoomIdFromMainPageHtml, validateAndNormalizeUniqueId, addUniqueId, removeUniqueId } = require('./lib/tiktokUtils.js');
 const { simplifyObject } = require('./lib/webcastDataConverter.js');
 const { deserializeMessage, deserializeWebsocketMessage } = require('./lib/webcastProtobuf.js');
 
@@ -140,6 +140,9 @@ class WebcastPushConnection extends EventEmitter {
 
         this.#isConnecting = true;
 
+        // add streamerId to uu
+        addUniqueId(this.#uniqueStreamerId);
+
         try {
             // roomId already specified?
             if (roomId) {
@@ -192,6 +195,10 @@ class WebcastPushConnection extends EventEmitter {
             return state;
         } catch (err) {
             this.#handleError(err, 'Error while connecting');
+
+            // remove streamerId from uu on connect fail
+            removeUniqueId(this.#uniqueStreamerId);
+
             throw err;
         } finally {
             this.#isConnecting = false;
@@ -209,6 +216,9 @@ class WebcastPushConnection extends EventEmitter {
 
             // Reset state
             this.#setUnconnected();
+
+            // remove streamerId from uu
+            removeUniqueId(this.#uniqueStreamerId);
 
             this.emit(ControlEvents.DISCONNECTED);
         }
@@ -351,6 +361,8 @@ class WebcastPushConnection extends EventEmitter {
                     sourceType: 54,
                 });
 
+                if (roomData.statusCode) throw new Error(`API Error ${roomData.statusCode} (${roomData.message || 'Unknown Error'})`);
+
                 this.#roomId = roomData.data.user.roomId;
                 this.#clientParams.room_id = roomData.data.user.roomId;
             }
@@ -395,7 +407,7 @@ class WebcastPushConnection extends EventEmitter {
 
     async #fetchRoomData(isInitial) {
         let webcastResponse = await this.#httpClient.getDeserializedObjectFromWebcastApi('im/fetch/', this.#clientParams, 'WebcastResponse', isInitial);
-        let upgradeToWsOffered = !!webcastResponse.wsUrl && !!webcastResponse.wsParam;
+        let upgradeToWsOffered = !!webcastResponse.wsUrl;
 
         if (!webcastResponse.cursor) {
             if (isInitial) {
@@ -428,7 +440,7 @@ class WebcastPushConnection extends EventEmitter {
         try {
             // Websocket specific params
             let wsParams = {
-                imprp: webcastResponse.wsParam.value,
+                imprp: webcastResponse.wsParam?.value || '',
                 compress: 'gzip',
             };
 
