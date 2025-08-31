@@ -77,11 +77,9 @@ export function simplifyObject(
             break;
         }
         case 'WebcastGiftMessage': {
-            originalObject = simplify<WebcastGiftMessage & { repeatEnd: any }>((webcastObject) => {
+            originalObject = simplify((webcastObject) => {
                 webcastObject.repeatEnd = !!webcastObject.repeatEnd;
 
-                // Add previously used JSON structure (for compatibility reasons)
-                // Can be removed soon <-- Will it ever be?
                 webcastObject.gift = {
                     gift_id: webcastObject.giftId,
                     repeat_count: webcastObject.repeatCount,
@@ -89,28 +87,26 @@ export function simplifyObject(
                     gift_type: webcastObject.giftDetails?.giftType
                 };
 
+                if (webcastObject.giftDetails?.giftImage?.url?.length) {
+                    webcastObject.giftPictureUrl = webcastObject.giftDetails.giftImage.url[0];
+                }
+
                 if (webcastObject.giftDetails) {
                     Object.assign(webcastObject, webcastObject.giftDetails);
                     delete webcastObject.giftDetails;
                 }
 
-                if (webcastObject.giftDetails.giftImage) {
-                    Object.assign(webcastObject, webcastObject.giftDetails.giftImage);
-                    delete webcastObject.giftDetails.giftImage;
-                }
-
                 if (webcastObject.giftExtra) {
-
                     if (webcastObject.giftExtra.toUserId) {
                         webcastObject.receiverUserId = webcastObject.giftExtra.toUserId;
                         delete webcastObject.giftExtra.toUserId;
                     }
-
                     if (webcastObject.giftExtra.sendGiftSendMessageSuccessMs) {
-                        webcastObject.timestamp = parseInt(webcastObject.giftExtra.sendGiftSendMessageSuccessMs);
+                        webcastObject.timestamp = parseInt(
+                            webcastObject.giftExtra.sendGiftSendMessageSuccessMs
+                        );
                         delete webcastObject.giftExtra.sendGiftSendMessageSuccessMs;
                     }
-
                     Object.assign(webcastObject, webcastObject.giftExtra);
                     delete webcastObject.giftExtra;
                 }
@@ -119,6 +115,7 @@ export function simplifyObject(
                     try {
                         webcastObject.monitorExtra = JSON.parse(webcastObject.monitorExtra);
                     } catch (err) {
+                        console.warn("Failed to parse monitorExtra JSON:", err);
                     }
                 }
 
