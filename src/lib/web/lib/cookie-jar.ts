@@ -16,7 +16,7 @@ export default class CookieJar {
      */
     constructor(
         public readonly axiosInstance: AxiosInstance,
-        public readonly cookies: Record<string, string> = Config.DEFAULT_HTTP_CLIENT_COOKIES
+        public readonly cookies: Record<string, string> = { ...Config.DEFAULT_HTTP_CLIENT_COOKIES }
     ) {
         // Intercept responses to store cookies
         this.axiosInstance.interceptors.response.use((response) => {

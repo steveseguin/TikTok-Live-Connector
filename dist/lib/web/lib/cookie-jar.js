@@ -18,7 +18,7 @@ class CookieJar {
      * @param axiosInstance The axios instance to attach the cookie jar to
      * @param cookies The initial cookies to set
      */
-    constructor(axiosInstance, cookies = config_1.default.DEFAULT_HTTP_CLIENT_COOKIES) {
+    constructor(axiosInstance, cookies = { ...config_1.default.DEFAULT_HTTP_CLIENT_COOKIES }) {
         this.axiosInstance = axiosInstance;
         this.cookies = cookies;
         // Intercept responses to store cookies
